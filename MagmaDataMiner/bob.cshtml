@@ -1,0 +1,602 @@
+﻿@using Microsoft.AspNetCore.Components
+@using RazorLight
+@using MagmaDataMiner
+@inherits TemplatePage<AbilitiesModel>
+
+<head>
+	<link rel="stylesheet" href="stuff.css">
+</head>
+
+
+<body>
+	<div class="nav-selectors">
+		<div class="page-selectors">
+			<span class="page-selector generic-selector" data-page="bindings">Bindings</span>
+			<span class="page-selector generic-selector" data-page="equip">Equipment</span>
+			<span class="page-selector generic-selector" data-page="enemies">Enemies</span>
+			<span class="page-selector generic-selector" data-page="other">Misc (?)</span>
+			<div class="searcher">
+				<input type="text" id="search-input" autocomplete="off"/>
+				<div id="results" style="display: none;"></div>
+			</div>
+		</div>
+
+		<div class="sub-selectors" style="display:none" data-page="bindings">
+			@foreach (var source in @Model.Sources)
+			{
+				<span class="bindings-selector generic-selector" data-bindings="@source.Source">
+					@source.Source
+				</span>
+			}
+		</div>
+		<div class="sub-selectors" style="display:none" data-page="equip">
+			@foreach (var category in @Model.Equipment)
+			{
+				<span class="equip-selector generic-selector" data-equip="@category.Name">
+					@category.Name
+				</span>
+			}
+		</div>
+		<div class="sub-selectors" style="display:none" data-page="other">
+			<span class="other-selector generic-selector" data-other="banes">
+				Book Challenges
+			</span>
+			<span class="other-selector generic-selector" data-other="run-mutators">
+				Run Mutators
+			</span>
+		</div>
+	</div>
+
+	<div class="content-root">
+		<div class="page-container" style="display:none" data-page="bindings">
+
+			@foreach (var source in @Model.Sources)
+			{
+				<div class="bindings-container" style="display: none" data-bindings="@source.Source">
+					<div class="generic-container">
+						<h2 class="ability-source">@source.Source</h2>
+						@foreach (var ability in source.Abilities)
+						{
+							<div class="generic-box generic-container" id="dataid:@ability.Hash">
+								<div class="binding-title">
+									@if (ability.IconBase64 != null)
+									{
+										<img class="ui-icon" src="data:image/png;base64, @ability.IconBase64"/>
+									}
+									else
+									{
+										<img class="ui-icon"/>
+									}
+									<h3 style="display:inline-block">@ability.Name</h3>
+									<span class="cost">@ability.Cost</span>
+									<span class="cooldown">@ability.Cooldown</span>
+									<span class="linkme" data-id="@ability.Hash">permalink</span>
+								</div>
+								<h4>@Raw(ability.Description)</h4>
+								<table class="augment-table">
+									<tr>
+										<th class="aug-name" width="100px">Name</th>
+										<th class="aug-desc" width="100px">Description</th>
+										<th class="aug-rarity" width="50px">Rarity</th>
+										<th class="aug-unique" width="50px">Unique</th>
+									</tr>
+									@foreach (var augment in ability.Augments)
+									{
+										<tr>
+											<td>@augment.Name</td>
+											<td>@Raw(augment.Description)</td>
+											<td>@augment.Rarity</td>
+											<td>@augment.Unique</td>
+										</tr>
+									}
+								</table>
+								<div class="ascensions-container">
+									@foreach (var ascension in ability.Ascensions)
+									{
+										<div id="dataid:@ascension.Hash">
+											<span class="ascension-name">@ascension.Name
+											@if (ascension.Cost != ability.Cost)
+											{
+												<span class="cost">@ascension.Cost</span>
+											}
+											@if (ascension.Cooldown != ability.Cooldown)
+											{
+												<span class="cooldown">@ascension.Cooldown</span>
+											}
+											</span>
+											<span class="ascension-description">@Raw(ascension.Description)</span>
+
+										</div>
+									}
+								</div>
+							</div>
+
+						}
+					</div>
+				</div>
+			}
+		</div>
+		<div class="page-container" style="display:none" data-page="equip">
+			@foreach (var category in @Model.Equipment)
+			{
+				<div class="equip-container" style="display: none" data-equip="@category.Name">
+					@if(category.Name == "Vestiges") {
+						<div class="set-holder">
+							@foreach (var set in Model.Sets) {
+								<span data-id="@set.Key">@set.Value.Name</span>
+							}
+						</div>
+					}
+
+					<table class="vestige-table" id="equip-@category.Name">
+						<tr>
+							<th width="60px">Icon</th>
+							<th width="120px">Name</th>
+							<th width="100">Description</th>
+							<th width="100px">Rarity</th>
+							@if(category.Name == "Vestiges") {
+								<th width="100px">Sets</th>
+								<th width="100px">Stats</th>
+							}
+						</tr>
+						@foreach (var item in category.All)
+						{
+							<tr id="dataid:@item.Hash" data-sets="@item.SetList">
+								<td width="60px">
+									@if (item.Icon != null) {
+										<img class="equip-icon" src="data:image/png;base64, @item.Icon" width="64" height="64"/>
+									}
+								</td>
+								<td width="120px">@item.Name <span class="linkme" data-id="@item.Hash">¶</span></td>
+								<td width="100">@Raw(item.Description)</td>
+								<td width="100px">@item.Rarity</td>
+								@if(category.Name == "Vestiges") {
+									<td width="100px">
+										@foreach (var set in @item.Sets!)
+										{
+											<div class="stat-entry">
+												<span>@Model.Sets[set].Name</span>
+											</div>
+										}
+									</td>
+									<td width="100px">
+										@foreach (var stat in @item.Stats)
+										{
+											<div class="stat-entry">
+												<span>@stat.Value</span>
+												<span class="stat-@stat.Icon">@stat.Name</span>
+											</div>
+										}
+
+									</td>
+								}
+							</tr>
+						}
+					</table>
+				</div>
+
+			}
+
+		</div>
+		<div class="page-container" style="display:none" data-page="enemies">
+			@foreach (var enemy in @Model.Enemies)
+			{
+				<div class="enemy-container">
+					<h4>@enemy.Name</h4>
+
+					@if (!enemy.SpawnAction.IsEmpty)
+					{
+						<div class="enemy-phase">
+							<b>On Spawn:</b>
+							<div class="enemy-state">
+								@foreach (var block in enemy.SpawnAction.Blocks)
+								{
+									<div class="enemy-block">
+										@foreach (var action in block.Candidates)
+										{
+											<div class="enemy-action">
+												<span style="display: block;">@action.Name</span>
+												<p>@action.Description</p>
+											</div>
+										}
+									</div>
+								}
+							</div>
+						</div>
+					}
+
+
+					@for (int p = 0; p < enemy.Phases.Count; p++)
+					{
+						var phase = enemy.Phases[p];
+
+						<div class="enemy-phase">
+							@if (enemy.Phases.Count > 1)
+							{
+								<b class="phase-title">Phase @p</b>
+							}
+							@foreach (var state in phase.States)
+							{
+								<b class="enemy-state-title">@state.Name</b>
+								<div class="enemy-state">
+									@foreach (var block in state.Blocks)
+									{
+										<div class="enemy-block">
+											@foreach (var action in block.Candidates)
+											{
+												<div class="enemy-action">
+													<span style="display: block;">@action.Name</span>
+													<p>@action.Description</p>
+												</div>
+											}
+										</div>
+									}
+								</div>
+
+							}
+						</div>
+
+					}
+
+					@*					<table class="vestige-table">
+				<tr>
+				<th width="100px">Name</th>
+				<th width="100">Description</th>
+				<th width="100px">Rarity</th>
+				<th width="100px">bob</th>
+				</tr>
+				@foreach (var item in category.All)
+				{
+				<tr>
+				<td width="100px">@item.Name</td>
+				<td width="100">@Raw(item.Description)</td>
+				<td width="100px">@item.Rarity</td>
+				<td width="100p">@item.Bob</td>
+				</tr>
+				}
+				</table>
+				*@
+				</div>
+
+			}
+		</div>
+	</div>
+	<div class="page-container" style="display:none" data-page="other">
+
+		<div class="other-container" style="display: none" data-other="banes">
+			<table class="vestige-table">
+				<tr>
+					<th width="100px">Name</th>
+					<th width="100">Description</th>
+					<th width="100px">Rewards</th>
+				</tr>
+				@foreach (var bane in Model.Banes.Where(x => !x.IsRunMutator))
+				{
+					<tr id="dataid:@bane.Hash">
+						<td width="100px">@Raw(@bane.Name) <span class="linkme" data-id="@bane.Hash">¶</span></td>
+						<td width="100">@Raw(bane.Description)</td>
+						<td width="100px">@bane.Reward</td>
+					</tr>
+				}
+			</table>
+		</div>
+
+		<div class="other-container" style="display: none" data-other="run-mutators">
+			<table class="vestige-table">
+				<tr>
+					<th width="100px">Name</th>
+					<th width="100">Description</th>
+				</tr>
+				@foreach (var bane in Model.Banes.Where(x => x.IsRunMutator))
+				{
+					<tr id="dataid:@bane.Hash">
+						<td width="100px">@Raw(@bane.Name) <span class="linkme" data-id="@bane.Hash">¶</span></td>
+						<td width="100">@Raw(bane.Description)</td>
+					</tr>
+				}
+			</table>
+		</div>
+	</div>
+
+	<script>
+		const curr = new URLSearchParams(window.location.search);
+
+		const navState = {
+			page: curr.get("page"),
+			section: curr.get("section"),
+			hash: curr.get("data"),
+			
+			blinking: null,
+
+			currentPage: null,
+
+			pages: new Map(),
+		};
+
+		function navGoto(pageName, sectionName, hash, force) {
+			const page = navState.pages.get(pageName);
+
+			if (pageName != navState.page || force) {
+				if (navState.currentPage) {
+					navState.currentPage.view.style.display = 'none';
+					navState.currentPage.button.classList.remove("generic-selected");
+
+					if (navState.currentPage.navView) {
+						navState.currentPage.navView.style.display = 'none';
+					}
+				}
+
+				navState.currentPage = {
+					view: page.view,
+					navView: page.navView,
+					button: page.button,
+				};
+
+				page.button.classList.add('generic-selected');
+				page.view.style.display = 'block';
+
+				if (page.navView) {
+					page.navView.style.display = 'block';
+				}
+
+				sectionName = sectionName || page.sectionName;
+			}
+
+			if (sectionName != page.sectionName || page.currentSection.view == null) {
+				if (page.currentSection.view) {
+					page.currentSection.view.style.display = 'none';
+
+					if (page.currentSection.button) {
+						page.currentSection.button.classList.remove('generic-selected');
+					}
+				}
+
+				const section = page.sections.get(sectionName);
+
+				if (section) {
+					page.currentSection = {
+						view: section.view,
+						button: section.button,
+					};
+
+					if (section.button) {
+						section.button.classList.add('generic-selected');
+					}
+
+					section.view.style.display = 'block';
+				}
+
+				page.sectionName = sectionName;
+			}
+
+			if (hash != navState.hash) {
+				if (navState.blinking) {
+					navState.blinking.classList.remove('notice-me-senpai');
+					navState.blinking = null;
+				}
+			}
+
+			if (hash) {
+				function blink() {
+					const hashView = document.getElementById(`dataid:${hash}`);
+					hashView.scrollIntoView({ block: "center", inline: "nearest" });
+					hashView.classList.add('notice-me-senpai');
+					navState.blinking = hashView;
+				}
+
+				if (force) {
+					setTimeout(blink, 80);
+				} else {
+					blink();
+				}
+			}
+
+			navState.page = pageName;
+			navState.section = sectionName;
+			navState.hash = hash;
+
+			const url = new URL(window.location);
+			url.searchParams.set("page", navState.page);
+			url.searchParams.set("section", navState.section);
+			if (navState.hash) {
+				url.searchParams.set("data", navState.hash);
+			} else {
+				url.searchParams.delete("data");
+			}
+			window.history.pushState({}, "", url);
+		}
+
+		function createPages(defaultSections) {
+			const selectors = document.getElementsByClassName(`page-selector`);
+			const views = new Map();
+			const navViews = new Map();
+
+			for (const view of document.getElementsByClassName(`page-container`)) {
+				views.set(view.getAttribute('data-page'), view);
+			}
+
+			for (const navView of document.getElementsByClassName(`sub-selectors`)) {
+				navViews.set(navView.getAttribute('data-page'), navView);
+			}
+
+			for (const button of selectors) {
+				const page = button.getAttribute('data-page');
+				const view = views.get(page);
+				const navView = navViews.get(page);
+
+				const sections = new Map();
+				const sectionsContainerByName = new Map();
+
+				for (const sectionContainer of document.getElementsByClassName(`${page}-container`)) {
+					sectionsContainerByName.set(sectionContainer.getAttribute(`data-${page}`), sectionContainer);
+				}
+
+				for (const sectionButton of document.getElementsByClassName(`${page}-selector`)) {
+					const sectionId = sectionButton.getAttribute(`data-${page}`);
+					sections.set(sectionId, {
+						button: sectionButton,
+						view: sectionsContainerByName.get(sectionId),
+					});
+
+					sectionButton.addEventListener('click', e => {
+						navGoto(page, sectionId, null);
+					});
+				}
+
+				navState.pages.set(page, {
+					view: view,
+					navView: navView,
+					button: button,
+
+					sections: sections,
+
+					sectionName: defaultSections[page],
+
+					currentSection: {
+						view: null,
+						button: null,
+					},
+				});
+
+				button.addEventListener('click', e => {
+					navGoto(page, null, null);
+				});
+			}
+		}
+
+		const words = [
+			@foreach(var index in Model.SearchIndex) {
+				@Raw(index.Render())
+			}
+		];
+		let currentIndex = -1;
+
+		const searchInput = document.getElementById('search-input');
+		const results = document.getElementById('results');
+		let matchedWords = [];
+
+		
+		let setFilter = new Set();
+		const vestigeTable = document.getElementById("equip-Vestiges");
+		const vestigeRows = [];
+
+		for (const vestigeTr of vestigeTable.getElementsByTagName("tr")) {
+			const dataSetsRaw =vestigeTr.getAttribute("data-sets"); 
+			vestigeRows.push({
+				tr: vestigeTr,
+				sets: new Set(JSON.parse(dataSetsRaw)),
+			});
+		}
+
+		function updateVestiges() {
+			if (setFilter.size == 0) {
+				for (const row of vestigeRows) {
+					row.tr.style.display = 'table-row';
+				}
+			} else {
+				for (const row of vestigeRows) {
+					row.tr.style.display = 'none';
+					for (const set of row.sets) {
+						if (setFilter.has(set)) {
+							row.tr.style.display = 'table-row';
+							break;
+						}
+					}
+				}
+
+			}
+		}
+
+		for (const setButton of document.querySelectorAll(".set-holder > span")) {
+			const guid = setButton.getAttribute("data-id");
+			setButton.addEventListener('click', _ => {
+				if (setButton.classList.toggle('generic-selected')) {
+					setFilter.add(guid);
+				} else {
+					setFilter.delete(guid);
+				}
+				updateVestiges();
+			});
+		}
+
+		function updateSearchResults() {
+			if (currentIndex < 0)
+				currentIndex = 0;
+			if (currentIndex >= matchedWords.length)
+				currentIndex = matchedWords.length - 1;
+			results.innerHTML = matchedWords.map((word, index) => `<div class="${index === currentIndex ? 'selected' : ''}">${word.key} (${word.tag})</div>`).join('');
+			results.style.display = 'block';
+		}
+
+		function searchFunction(e) {
+			const keyword = searchInput.value.toLowerCase();
+			matchedWords = words.filter(word => word.key.toLowerCase().indexOf(keyword) != -1);
+
+			if (keyword === '' || matchedWords.length === 0) {
+				results.style.display = 'none';
+				return;
+			}
+
+
+			// escape key
+			if (e.keyCode == 27) {
+				results.style.display = 'none';
+				return;
+			} else if (e.keyCode == 13) { //enter
+				e.preventDefault();
+				console.log("ENTER");
+				results.style.display = 'none';
+				const match = matchedWords[currentIndex];
+				if (match) {
+					navGoto(match.page, match.sub, match.hash);
+				}
+				return;
+			}
+
+
+			updateSearchResults();
+		}
+
+		function handleArrows(e) {
+			switch (e.keyCode) {
+				case 38: // up arrow
+					e.preventDefault();
+					currentIndex = Math.max(currentIndex - 1, 0);
+					updateSearchResults();
+					break;
+				case 40: // down arrow
+					e.preventDefault();
+					currentIndex = Math.min(currentIndex + 1, matchedWords.length - 1);
+					updateSearchResults();
+					break;
+				case 13: // enter
+			}
+		}
+
+		navState.page ||= 'bindings';
+
+		createPages({
+			bindings: 'Magma Miner',
+			equip: 'Vestiges',
+			other: 'banes',
+		});
+
+		navGoto(navState.page, navState.section, navState.hash, true);
+
+		
+		for (const link of document.getElementsByClassName('linkme')) {
+			link.addEventListener('click', e => {
+				const url = new URL(window.location);
+				url.searchParams.set("page", navState.page);
+				url.searchParams.set("section", navState.section);
+				url.searchParams.set("data", link.getAttribute('data-id'));
+				navigator.clipboard.writeText(url.toString());
+			});
+		}
+
+		searchInput.addEventListener('keydown', handleArrows);
+		searchInput.addEventListener('keyup', searchFunction);
+	</script>
+</body>
+
+
